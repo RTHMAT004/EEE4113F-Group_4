@@ -158,11 +158,9 @@ void networkTask(void* param) {
   }
 }
 
-
-
 void setup() {
   Serial.begin(115200);
-  \\Serial2.begin(9600, SERIAL_8N1, UART_RX, UART_TX);  // UART2 init
+  //Serial2.begin(9600, SERIAL_8N1, UART_RX, UART_TX);  // UART2 init
   screenSemaphore = xSemaphoreCreateBinary();
   xSemaphoreGive(screenSemaphore);  // Initially available
 
