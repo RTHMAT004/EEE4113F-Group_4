@@ -73,17 +73,6 @@ void connectWifi() {
 }
 
 void writeScreen(const char* currentTime) {
-  // Serial.println();
-  // Serial.println("==== Display Output ====");
-  // Serial.println(String("Time: ") + currentTime);
-  // Serial.println(String("Unit: ") + unitNumber);
-  // Serial.println("-------------------------");
-  // Serial.println("Recent Captures:");
-  // Serial.println("1. " + captureTimestamps[2]);
-  // Serial.println("2. " + captureTimestamps[1]);
-  // Serial.println("3. " + captureTimestamps[0]);
-  // Serial.println("=========================");
-
   u8g2.setFont(u8g2_font_5x8_tr);
   u8g2.drawStr(0, 12, currentTime);
   u8g2.drawStr(0, 20, (String("Unit: ") + unitNumber).c_str());
@@ -133,44 +122,6 @@ void readFromGoogleSheet() {
 }
 
 void sendTrapTask(void* param) { 
-  //MODIFIED FOR USER INPUT - this is fine because it reads every 1 second
-    // while (true) {
-    //   if (Serial2.available()) {
-
-    //     char c = Serial2.read();
-        
-    //     if (c >= 32 && c <= 126) { sBuffer += c;} //add to buffer
-    //     if (sBuffer.length() > 10) {sBuffer = sBuffer.substring(sBuffer.length() - 10);} //limit to last 10 chars
-
-    //     Serial.println(String("Buffer: ") + sBuffer);
-
-
-    //     if (sBuffer.indexOf("Honey") != -1) {
-    //       Serial.println("HONEY BADGER");
-    //       digitalWrite(OUTPUT_PIN_1, HIGH);
-    //       delay(1000);
-    //       digitalWrite(OUTPUT_PIN_1, LOW);
-    //       sBuffer = "";
-          
-    //   } else if (sBuffer.indexOf("Leopard") != -1) {
-    //       Serial.println("LEOPARD");
-    //       digitalWrite(OUTPUT_PIN_2, HIGH);
-    //       delay(1000);
-    //       digitalWrite(OUTPUT_PIN_2, LOW);
-    //       sBuffer = "";
-
-    //   } else if (sBuffer.indexOf("Caracal") != -1) {
-    //       Serial.println("CARACAL");
-    //       digitalWrite(OUTPUT_PIN_3, HIGH);
-    //       delay(1000);
-    //       digitalWrite(OUTPUT_PIN_3, LOW);
-    //       sBuffer = "";
-
-    //   }
-    // }
-    // vTaskDelay(pdMS_TO_TICKS(500)); //check trigger every 0.5s
-    // }
-
 //BELOW IS THE CORRECT CODE FOR THE FINAL DEMO
 while (true) {
   while (Serial2.available()) {
@@ -189,24 +140,34 @@ while (true) {
 
   int triggered = 0;
 
-  if (sBuffer.indexOf("Honey") != -1) {
+  if (sBuffer.indexOf("Honey") != -1) {             // OUTPUT 1 is siren and light
     Serial.println("HONEY BADGER");
     digitalWrite(OUTPUT_PIN_1, HIGH);
-    delay(1000);
+    delay(3000);
     digitalWrite(OUTPUT_PIN_1, LOW);
     triggered = 1;
-  } else if (sBuffer.indexOf("Leopard") != -1) {
+
+  } else if (sBuffer.indexOf("Leopard") != -1) {    // OUTPUT 2 is ultrasound and light
     Serial.println("LEOPARD");
-    digitalWrite(OUTPUT_PIN_2, HIGH);
-    delay(1000);
+    digitalWrite(OUTPUT_PIN_2, HIGH); //
+    delay(3000);
     digitalWrite(OUTPUT_PIN_2, LOW);
     triggered = 1;
-  } else if (sBuffer.indexOf("Caracal") != -1) {
+
+  } else if (sBuffer.indexOf("Caracal") != -1) {    // OUTPUT 3 is just light
     Serial.println("CARACAL");
-    digitalWrite(OUTPUT_PIN_3, HIGH);
-    delay(1000);
-    digitalWrite(OUTPUT_PIN_3, LOW);
+    digitalWrite(OUTPUT_PIN_2, HIGH);
+    delay(3000);
+    digitalWrite(OUTPUT_PIN_2, LOW);
     triggered = 1;
+
+  } else if (sBuffer.indexOf("Light") != -1) {
+    Serial.println("LIGHT");
+    digitalWrite(OUTPUT_PIN_3, HIGH);   // This sets the light on for deterrent subsystem
+    delay(3000);
+    digitalWrite(OUTPUT_PIN_3, LOW);
+    triggered = 1;                      // Still want image and timestamp for night-time
+
   }
 
   if (triggered) {
@@ -254,26 +215,6 @@ void sendToGoogleSheet(String timestamp) {
   http.end();
 }
 
-// void sendErrorToGoogleSheet(const String& errorMessage) {
-//   HTTPClient http;
-//   http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
-//   http.begin(scriptURL);  // Same script URL
-//   http.addHeader("Content-Type", "application/x-www-form-urlencoded");
-
-//   String encodedMsg = errorMessage;
-//   encodedMsg.replace(" ", "%20");
-//   encodedMsg.replace(":", "%3A");
-
-//   String postData = "error=" + encodedMsg;
-//   Serial.println("Sending error: " + postData);
-
-//   int code = http.POST(postData);
-//   Serial.println("POST status: " + String(code));
-//   Serial.println("Response: " + http.getString());
-
-//   http.end();
-// }
-
 void displayTask(void* param) {
   while (true) {
     struct tm timeinfo;
@@ -292,19 +233,6 @@ void displayTask(void* param) {
     vTaskDelay(pdMS_TO_TICKS(1000));  // Update every second
   }
 }
-
-// void uartNotifyTask(void* param) {
-//   while (true) {
-//     if (Serial2.available()) {
-//       String msg = Serial2.readStringUntil('\n');
-//       msg.trim();
-//       if (msg.startsWith("ERROR:")) {
-//         Serial.println("[UART ERROR] " + msg);
-//       }
-//     }
-//     vTaskDelay(pdMS_TO_TICKS(15000));
-//   }
-// }
 
 void networkTask(void* param) {
   while (true) {
@@ -335,7 +263,6 @@ void setup() {
 
   xTaskCreatePinnedToCore(displayTask, "Display Task", 4096, NULL, 1, NULL, 1);
   xTaskCreatePinnedToCore(networkTask, "Network Task", 8192, NULL, 1, NULL, 1);
- // xTaskCreatePinnedToCore(uartNotifyTask, "UART Notify Task", 2048, NULL, 1, NULL, 1);
   xTaskCreatePinnedToCore(sendTrapTask, "Send Trap Instruction", 8192, NULL, 1, NULL, 1);
 }
 
@@ -352,55 +279,4 @@ String cleanInput(String input) {
 
 
 void loop() {
-  // if (Serial.available()) {
-  //   char c = Serial.read();
-  //   if (c == 'T') {
-  //     struct tm now;
-  //     if (getLocalTime(&now)) {
-  //       char stamp[32];
-  //       strftime(stamp, sizeof(stamp), "%Y-%m-%d %H:%M:%S", &now);
-  //       sendToGoogleSheet(String(stamp));
-  //     }
-  //   }
-  // }
-
-//     if (Serial2.available()) {
-//       String msg = Serial2.readStringUntil('\n');
-//       msg.trim();  // Remove \r, spaces, etc.
-//       msg = cleanInput(msg);
-//       msg = msg.substring(msg.length()-2);
-      
-//   // Only allow 2-character commands
-//     if (msg.length() == 2) {
-//       Serial.print("Received: ");
-//       Serial.println(msg);
-
-//     if (msg == "HB") {
-//       Serial.println("HONEY BADGER");
-//       // digitalWrite(OUTPUT_PIN_1, HIGH);
-//       // delay(1000);
-//       // digitalWrite(OUTPUT_PIN_1, LOW);
-//     } else if (msg == "LD") {
-//       Serial.println("LEOPARD");
-//       // digitalWrite(OUTPUT_PIN_2, HIGH);
-//       // delay(1000);
-//       // digitalWrite(OUTPUT_PIN_2, LOW);
-//     } else if (msg == "CL") {
-//       Serial.println("CARACAL");
-//       // digitalWrite(OUTPUT_PIN_3, HIGH);
-//       // delay(1000);
-//       // digitalWrite(OUTPUT_PIN_3, LOW);
-//     } else {
-//       Serial.println("Unknown 2-letter code: " + msg);
-//     }
-//   } else {
-//     // Ignore invalid or noisy strings
-//     Serial.print("Ignored garbage/partial message: ");
-//     Serial.println(msg);
-//   }
-
-//   // Optional: flush any leftover serial noise
-//   while (Serial2.available()) Serial2.read();
-// }
-    //vTaskDelay(pdMS_TO_TICKS(1000));
 }
