@@ -1,16 +1,23 @@
 function doPost(e) {
-  var data = Utilities.base64Decode(e.parameters.data);
-  var nombreArchivo = Utilities.formatDate(new Date(), "Africa/Johannesburg", "yyyy-MM-dd HH:mm:ss")+".jpg";
-  var blob = Utilities.newBlob(data, e.parameters.mimetype, nombreArchivo );
-  
-  
-  var folder, folders = DriveApp.getFoldersByName("ESP32-CAM");
-  if (folders.hasNext()) {
-    folder = folders.next();
-  } else {
-    folder = DriveApp.createFolder("ESP32-CAM");
-  }
-  var file = folder.createFile(blob); 
-  
-  return ContentService.createTextOutput("Completo.")
+  // Decode the incoming base64 image data
+  var imageData = Utilities.base64Decode(e.parameters.data);
+  var mimeType = e.parameters.mimetype || "image/jpeg";
+
+  // Create a timestamped filename
+  var timestamp = Utilities.formatDate(new Date(), "Africa/Johannesburg", "yyyy-MM-dd HH:mm:ss");
+  var fileName = timestamp + ".jpg";
+
+  // Convert the decoded data into a blob
+  var imageBlob = Utilities.newBlob(imageData, mimeType, fileName);
+
+  // Get or create the "ESP32-CAM" folder in Google Drive
+  var folderName = "ESP32-CAM";
+  var folderIterator = DriveApp.getFoldersByName(folderName);
+  var folder = folderIterator.hasNext() ? folderIterator.next() : DriveApp.createFolder(folderName);
+
+  // Save the image file to the folder
+  var file = folder.createFile(imageBlob);
+
+  // Return a simple response
+  return ContentService.createTextOutput("Upload complete.");
 }
