@@ -21,16 +21,16 @@ const char* scriptURL = "https://script.google.com/macros/s/AKfycby8O9UX5A4D2Daj
 #define DC 26
 #define CS 5
 
-// UART pins
+// UART pins (comms from detection)
 #define UART_TX 17
 #define UART_RX 16
 
-// To trap //need 12 13 14
+// GPIO digital logic pins (comms to mitigation)
 #define OUTPUT_PIN_1 12
 #define OUTPUT_PIN_2 13
 #define OUTPUT_PIN_3 14
 
-// Screen object
+// Screen object initialisation 
 U8G2_SSD1306_128X64_NONAME_F_4W_HW_SPI u8g2(U8G2_R0, CS, DC, RES);
 
 // Data
@@ -122,7 +122,6 @@ void readFromGoogleSheet() {
 }
 
 void sendTrapTask(void* param) { 
-//BELOW IS THE CORRECT CODE FOR THE FINAL DEMO
 while (true) {
   while (Serial2.available()) {
     char c = Serial2.read();
@@ -132,37 +131,36 @@ while (true) {
   }
 
   if (sBuffer.length() > 20) {
-    sBuffer = sBuffer.substring(sBuffer.length() - 20);
+    sBuffer = sBuffer.substring(sBuffer.length() - 20); //compose UART buffer of last 20 characters to check for incoming messages
   }
 
   Serial.println(String("Buffer: ") + sBuffer);
 
-
   int triggered = 0;
 
   if (sBuffer.indexOf("Honey") != -1) {             // OUTPUT 1 is siren and light
-    Serial.println("HONEY BADGER");
+   // Serial.println("HONEY BADGER");
     digitalWrite(OUTPUT_PIN_1, HIGH);
     delay(3000);
     digitalWrite(OUTPUT_PIN_1, LOW);
     triggered = 1;
 
   } else if (sBuffer.indexOf("Leopard") != -1) {    // OUTPUT 2 is ultrasound and light
-    Serial.println("LEOPARD");
+   // Serial.println("LEOPARD");
     digitalWrite(OUTPUT_PIN_2, HIGH); //
     delay(3000);
     digitalWrite(OUTPUT_PIN_2, LOW);
     triggered = 1;
 
   } else if (sBuffer.indexOf("Caracal") != -1) {    // OUTPUT 3 is just light
-    Serial.println("CARACAL");
+   // Serial.println("CARACAL");
     digitalWrite(OUTPUT_PIN_2, HIGH);
     delay(3000);
     digitalWrite(OUTPUT_PIN_2, LOW);
     triggered = 1;
 
   } else if (sBuffer.indexOf("Light") != -1) {
-    Serial.println("LIGHT");
+    //Serial.println("LIGHT");
     digitalWrite(OUTPUT_PIN_3, HIGH);   // This sets the light on for deterrent subsystem
     delay(3000);
     digitalWrite(OUTPUT_PIN_3, LOW);
@@ -201,7 +199,7 @@ void sendToGoogleSheet(String timestamp) {
   if (code > 0) {
     Serial.println("POST status: " + String(code));
 
-    // Optional: Only try to read the response if the code is 200
+    // Only try to read the response if the code is 200, meaning successful
     if (code == HTTP_CODE_OK) {
       String response = http.getString();
       Serial.println("Response: " + response);
@@ -215,7 +213,7 @@ void sendToGoogleSheet(String timestamp) {
   http.end();
 }
 
-void displayTask(void* param) {
+void displayTask(void* param) { //update screen with information. Most important part is the time updating every second
   while (true) {
     struct tm timeinfo;
     if (getLocalTime(&timeinfo)) {
@@ -234,7 +232,7 @@ void displayTask(void* param) {
   }
 }
 
-void networkTask(void* param) {
+void networkTask(void* param) { //update the screen with information from the Google Sheet
   while (true) {
     readFromGoogleSheet();
     vTaskDelay(pdMS_TO_TICKS(10000)); // Every 10 seconds
@@ -242,13 +240,13 @@ void networkTask(void* param) {
 }
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(115200); //Debug line
   Serial2.begin(9600, SERIAL_8N1, UART_RX, UART_TX); // UART comms setup
 
-  //Pin Setups
-  pinMode(OUTPUT_PIN_1, OUTPUT);
-  pinMode(OUTPUT_PIN_2, OUTPUT);
-  pinMode(OUTPUT_PIN_3, OUTPUT);
+  //Pin Setups for deterrent
+  pinMode(OUTPUT_PIN_1, OUTPUT); //Honey badger
+  pinMode(OUTPUT_PIN_2, OUTPUT); //Leopard and caracal
+  pinMode(OUTPUT_PIN_3, OUTPUT); //Turn on LED
 
   digitalWrite(OUTPUT_PIN_1, LOW);
   digitalWrite(OUTPUT_PIN_2, LOW);
@@ -265,18 +263,6 @@ void setup() {
   xTaskCreatePinnedToCore(networkTask, "Network Task", 8192, NULL, 1, NULL, 1);
   xTaskCreatePinnedToCore(sendTrapTask, "Send Trap Instruction", 8192, NULL, 1, NULL, 1);
 }
-
-String cleanInput(String input) {
-  String output = "";
-  for (int i = 0; i < input.length(); i++) {
-    char c = input.charAt(i);
-    if (c >= 32 && c <= 126) {  // Only printable ASCII
-      output += c;
-    }
-  }
-  return output;
-}
-
 
 void loop() {
 }
