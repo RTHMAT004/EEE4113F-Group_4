@@ -19,6 +19,9 @@ UART Test Code - This is flashed to the companion microcontroller to send via UA
 
 UART_Comms - This is the code flashed to the main microcontroller to receive via UART as explained in the testing section of the interface subsystem.
 
-sheetscript.js - This is the code written to the Google Scripts API that performs all functionality within the Google Suite used in the project for the interface subsystem
+sheetscript.js - This is the code written to the Google Scripts API that performs all functionality within the Google Suite used in the project for the interface subsystem.
 
 ## MITIGATION SUBSYSTEM
+Test - Contains code used to test connection to Arduino UNO.
+
+Mitigate_Subsystem_Code - Contains the code used to create the Mitigation Subsystem.
