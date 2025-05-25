@@ -4,7 +4,7 @@ DAT01 - Code for testing predator identification within the required range.
 
 DAT02 - Code for testing predators classification within the required range.
 
-DAT03 - Code for acceptance test ensuring peak current is less than 300mA.
+DAT03 - Code for acceptance test ensuring peak current is less than 300mA - make use of Final code.
 
 DAT04 - Code for acceptance test ensuring UART communication.
 
