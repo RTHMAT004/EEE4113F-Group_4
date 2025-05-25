@@ -1,5 +1,12 @@
-# EEE4113F Group 4
-If this works, we jeniuses
+## EEE4113F Group 4
+## DETECTION SUBSYSTEM
+DAT01 - Code for testing predator identification within the required range.
+
+DAT02 - Code for testing predators classification within the required range.
+
+DAT03 - Code for acceptance test ensuring peak current is less than 300mA.
+
+DAT04 - Code for acceptance test ensuring UART communication.
 
 ## INTERFACE SUBSYSTEM
 EEE4113F_Code_Semaphore_No_Screen - This is the final code flashed to the microcontroller. It does include the screen running code.
